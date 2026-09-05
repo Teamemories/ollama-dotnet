@@ -1,3 +1,7 @@
+<img src="ollama/ICON.PNG" alt="" style="width: 75px;" />
+
+# Repository Status Review
+
 ---
 [![Automatic Dependency Submission](https://github.com/Teamemories/ollama-dotnet/actions/workflows/dependency-graph/auto-submission/badge.svg)](https://github.com/Teamemories/ollama-dotnet/actions/workflows/dependency-graph/auto-submission)
 [![Code Coverage Agent](https://github.com/Teamemories/ollama-dotnet/actions/workflows/code-coverage-agent/code-coverage-agent/badge.svg?branch=main)](https://github.com/Teamemories/ollama-dotnet/actions/workflows/code-coverage-agent/code-coverage-agent)
