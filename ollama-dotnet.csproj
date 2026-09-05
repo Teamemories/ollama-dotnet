@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>ollama_dotnet</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <OutputType>Library</OutputType>
+        <Version>0.6.1</Version>
+        <PackageVersion>0.6.1</PackageVersion>
+        <PackageId>ollama-dotnet</PackageId>
+        <Authors>Teamemories | a-meed</Authors>
+        <Company>Teamemories</Company>
+        <Copyright>@ 2026-2027 ollama-dotnet</Copyright>
+        <RepositoryUrl>https://github.com/Teamemories/ollama-dotnet</RepositoryUrl>
+        <PackageProjectUrl>https://nuget.org/ollama-dotnet</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageLicenseFile>LICENSE.MD</PackageLicenseFile>
+        <PackageReadmeFile>README.MD</PackageReadmeFile>
+        <PackageIcon>ICON.PNG</PackageIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="LICENSE.MD" Pack="true" PackagePath=""/>
+        <None Include="ICON.PNG" Pack="true" PackagePath=""/>
+        <None Include="README.MD" Pack="true" PackagePath=""/>
+    </ItemGroup>
+
+</Project>

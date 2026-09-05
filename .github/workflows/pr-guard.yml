@@ -1,0 +1,179 @@
+name: Pull Request Guard
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR Body
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+          TITLE: ${{ github.event.pull_request.title }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          set -e
+
+          echo "=== PR VALIDATION START ==="
+
+          if [ -z "$BODY" ]; then
+            echo "::error::PR body is empty"
+            exit 1
+          fi
+
+          CLEAN=$(echo "$BODY" | tr -d '[:space:]')
+          if [ -z "$CLEAN" ]; then
+            echo "::error::PR body contains only whitespace"
+            exit 1
+          fi
+
+          echo "Detecting PR type from labels..."
+
+          if echo "$LABELS" | grep -qi "bug"; then
+            TYPE="bug"
+          elif echo "$LABELS" | grep -qi "feature"; then
+            TYPE="feature"
+          elif echo "$LABELS" | grep -qi "docs"; then
+            TYPE="docs"
+          elif echo "$LABELS" | grep -qi "security"; then
+            TYPE="security"
+          else
+            TYPE="general"
+          fi
+
+          echo "TYPE=$TYPE"
+
+          require() {
+            if ! echo "$BODY" | grep -Fq "$1"; then
+              echo "::error::Missing required section: $1"
+              exit 1
+            fi
+          }
+
+          no_placeholder() {
+            if echo "$BODY" | grep -Fq "$1"; then
+              echo "::error::Unresolved placeholder found: $1"
+              exit 1
+            fi
+          }
+
+          # Shared requirements
+          require "**Related Issues**"
+          require "**Checklist**"
+
+          case "$TYPE" in
+
+            bug)
+              require "**Bug Description**"
+              require "**Root Cause**"
+              require "**Fix Description**"
+              require "**Verification**"
+              ;;
+
+            feature)
+              require "**Feature Description**"
+              require "**Motivation**"
+              require "**Implementation Details**"
+              require "**Testing**"
+              ;;
+
+            docs)
+              require "**Summary**"
+              require "**Reason**"
+              require "**Affected Documentation**"
+              ;;
+
+            security)
+              require "**Summary**"
+              require "**Vulnerability Addressed**"
+              require "**Impact**"
+              require "**Disclosure**"
+              ;;
+
+            general)
+              require "**Description**"
+              require "**Type of Change**"
+              require "**Changes Made**"
+              require "**Testing**"
+              ;;
+
+          esac
+
+          # Prevent incomplete templates
+          no_placeholder "> Describe"
+          no_placeholder "- Closes #"
+          no_placeholder "- Fixes #"
+
+          echo "PR body validation passed."
+
+
+      - name: Enforce Conventional Commits
+        run: |
+          echo "Checking commit messages..."
+
+          COMMITS=$(curl -s \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
+            | jq -r '.[].commit.message')
+
+          echo "$COMMITS"
+
+          echo "$COMMITS" | while read -r msg; do
+            if ! echo "$msg" | grep -Eq "^(feat|fix|docs|refactor|test|chore|security)(\(.+\))?: .+"; then
+              echo "::error::Invalid commit message: $msg"
+              exit 1
+            fi
+          done
+
+          echo "Commit messages are valid."
+
+
+      - name: Ensure Changelog Update (for feature/bug/security)
+        run: |
+          if echo "${{ github.event.pull_request.labels.*.name }}" | grep -Eq "feature|bug|security"; then
+            echo "Checking CHANGELOG.md update..."
+
+            git fetch origin main
+            CHANGED=$(git diff --name-only origin/main...HEAD)
+
+            if ! echo "$CHANGED" | grep -q "CHANGELOG.md"; then
+              echo "::error::CHANGELOG.md must be updated for this type of PR"
+              exit 1
+            fi
+          fi
+
+
+      - name: Block Dangerous Scope Changes
+        run: |
+          echo "Checking file scope..."
+
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+
+          echo "$CHANGED_FILES"
+
+          if echo "$LABELS" | grep -qi "docs"; then
+            if echo "$CHANGED_FILES" | grep -Eq "src/|core/|lib/"; then
+              echo "::error::Docs PR cannot modify source code"
+              exit 1
+            fi
+          fi
+
+          if echo "$LABELS" | grep -qi "security"; then
+            if echo "$CHANGED_FILES" | grep -vE "security|auth|crypto"; then
+              echo "::error::Security PR scope is too broad"
+              exit 1
+            fi
+          fi
+
+          echo "Scope validation passed."
