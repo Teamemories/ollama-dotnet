@@ -17,7 +17,7 @@ See [Ollama Models](https://ollama.com/search) for available models.
 ## Install
 
 ```shell
-dotnet add package O_Llama
+dotnet add package ollama-dotnet
 ```
 
 ## Basic usage
