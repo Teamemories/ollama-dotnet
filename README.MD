@@ -1,3 +1,5 @@
+<img src="logo.png" alt=""  style="width: 50px; height: 50px;" />
+
 # Ollama .NET Library
 
 Typed C# client for integrating .NET 10+ applications with [Ollama](https://ollama.com).
